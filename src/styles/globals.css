@@ -1,0 +1,290 @@
+/* ─────────────────────────────────────────────
+   NexusAI — Skeuomorphic Dark Theme
+   Deep blacks, inner shadows, embossed surfaces
+   ───────────────────────────────────────────── */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base Reset ── */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Inter', 'Söhne', system-ui, sans-serif;
+    background-color: #0a0a0c;
+    color: #e0e0e4;
+    line-height: 1.65;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  #root {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgba(139, 92, 246, 0.5);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: rgba(139, 92, 246, 0.3);
+    color: #fff;
+  }
+}
+
+/* ── Skeuomorphic Surface Utilities ── */
+@layer components {
+  /* Embossed panel — like a raised physical surface */
+  .skeuo-panel {
+    background: linear-gradient(145deg, #141418, #101014);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
+      0 -1px 0 0 rgba(0, 0, 0, 0.4) inset,
+      0 4px 16px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  /* Recessed/inset area — like a carved surface */
+  .skeuo-inset {
+    background: #09090b;
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.5) inset,
+      0 -1px 0 0 rgba(255, 255, 255, 0.02) inset;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+  }
+
+  /* Button — raised tactile button */
+  .skeuo-btn {
+    background: linear-gradient(180deg, #1e1e24, #161619);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+      0 -1px 0 0 rgba(0, 0, 0, 0.3) inset,
+      0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+  }
+
+  .skeuo-btn:hover {
+    background: linear-gradient(180deg, #242429, #1a1a1e);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+      0 -1px 0 0 rgba(0, 0, 0, 0.3) inset,
+      0 3px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .skeuo-btn:active {
+    background: linear-gradient(180deg, #161619, #1e1e24);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.4) inset,
+      0 -1px 0 0 rgba(255, 255, 255, 0.02) inset;
+  }
+
+  /* Active/pressed button state */
+  .skeuo-btn-active {
+    background: linear-gradient(180deg, #1a1a2e, #161625);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.4) inset,
+      0 -1px 0 0 rgba(139, 92, 246, 0.1) inset,
+      0 0 20px rgba(139, 92, 246, 0.05);
+    border: 1px solid rgba(139, 92, 246, 0.15);
+  }
+
+  /* Sidebar */
+  .skeuo-sidebar {
+    background: linear-gradient(180deg, #111114, #0c0c0e);
+    box-shadow:
+      1px 0 0 0 rgba(255, 255, 255, 0.03),
+      4px 0 24px rgba(0, 0, 0, 0.5);
+    border-right: 1px solid rgba(255, 255, 255, 0.03);
+  }
+
+  /* Input field */
+  .skeuo-input {
+    background: #09090b;
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.5) inset,
+      0 -1px 0 0 rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: all 0.2s ease;
+  }
+
+  .skeuo-input:focus {
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.5) inset,
+      0 0 0 2px rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.3);
+  }
+
+  /* Divider with depth */
+  .skeuo-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+  }
+
+  /* Glow accent */
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.15), 0 0 40px rgba(139, 92, 246, 0.05);
+  }
+}
+
+/* ── Animations ── */
+@layer utilities {
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-slide-in,
+    .animate-bounce-dot {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
+
+/* ── Font size variants ── */
+.font-size-sm { font-size: 13px; }
+.font-size-md { font-size: 15px; }
+.font-size-lg { font-size: 17px; }
+
+/* ── Toast animations ── */
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.toast-enter {
+  animation: slideInRight 300ms ease-out forwards;
+}
+
+/* ── Markdown prose overrides ── */
+.prose { color: #e0e0e4; }
+.prose strong { color: #f0f0f4; }
+.prose em { color: #c0c0c8; }
+.prose h1, .prose h2, .prose h3, .prose h4 { color: #f0f0f4; }
+.prose a { color: #a78bfa; }
+.prose blockquote { color: #8e8ea0; border-left-color: rgba(139, 92, 246, 0.4); }
+.prose code { color: #e879f9; }
+.prose pre { background: #09090b; }
+
+/* ── Select styling ── */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238e8ea0' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+select option {
+  background: #141418;
+  color: #e0e0e4;
+}
+
+/* ── Range slider ── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #1a1a1e;
+  border-radius: 3px;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4) inset;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #a78bfa, #7c3aed);
+  cursor: pointer;
+  border: 2px solid #0a0a0c;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  transition: transform 150ms ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #a78bfa, #7c3aed);
+  cursor: pointer;
+  border: 2px solid #0a0a0c;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+/* ── Pulse glow animation ── */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* ── Streaming prose — smooth text appearance ── */
+.streaming-prose {
+  /* Smooth anti-flicker during rapid DOM updates */
+  will-change: contents;
+  contain: content;
+}
+
+/* Blinking cursor at end of streaming text */
+.streaming-prose > *:last-child::after {
+  content: '▍';
+  display: inline;
+  color: rgba(139, 92, 246, 0.7);
+  animation: cursorBlink 0.8s step-end infinite;
+  margin-left: 2px;
+  font-weight: 400;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}

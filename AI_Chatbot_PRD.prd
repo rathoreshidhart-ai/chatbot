@@ -1,0 +1,571 @@
+# PRODUCT REQUIREMENTS DOCUMENT (PRD)
+# AI Chatbot Application
+# Version: 1.0
+# Date: 2026-04-09
+# Status: Draft
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 1. OVERVIEW
+
+### 1.1 Product Summary
+A powerful, minimal, dark-themed AI chatbot web application that mirrors the
+experience of ChatGPT. Users interact with an AI assistant powered by a
+user-supplied API key. The bot answers questions across all general domains
+(coding, writing, math, analysis, creative tasks, etc.). When the AI cannot
+confidently answer a query, it gracefully redirects the user to a curated
+external resource or web search so the user can find the answer themselves.
+
+### 1.2 Vision Statement
+"Give every user a personal AI assistant — fast, smart, honest about its
+limits, and always helpful — wrapped in a clean, distraction-free dark UI."
+
+### 1.3 Goals
+- Replicate the core conversational experience of ChatGPT.
+- Allow any developer / user to plug in their own AI API key (OpenAI,
+  Anthropic, Gemini, or any OpenAI-compatible endpoint).
+- Surface a clean, minimal, dark-mode interface by default.
+- Automatically detect when a question is out of scope or unanswerable and
+  redirect users to trusted external resources.
+- Be fully self-hostable with zero mandatory backend (pure frontend + API).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 2. TARGET USERS
+
+| User Type          | Description                                                  |
+|--------------------|--------------------------------------------------------------|
+| General Public     | People who want ChatGPT-like answers without a subscription. |
+| Developers         | Builders who want to embed AI chat into their own projects.  |
+| Students           | Learners seeking explanations, tutoring, and research help.  |
+| Small Businesses   | Teams that want an internal AI assistant with their own key. |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 3. CORE FEATURES
+
+### 3.1 API Key Configuration
+- On first launch, a modal/settings panel prompts the user to enter their API key.
+- Supported providers:
+    • OpenAI          → https://api.openai.com/v1
+    • Anthropic       → https://api.anthropic.com/v1
+    • Google Gemini   → https://generativelanguage.googleapis.com
+    • Custom endpoint → user-defined base URL (OpenAI-compatible)
+- The key is stored in localStorage (never sent to any third-party server).
+- A dropdown lets the user select the model (e.g., gpt-4o, claude-sonnet-4,
+  gemini-2.5-pro).
+- Users can update or revoke their API key at any time from the Settings panel.
+
+### 3.2 Conversational Chat Interface
+- Input box at the bottom of the screen (same as ChatGPT).
+- Send on Enter key or click of Send button.
+- Supports Shift+Enter for multi-line input.
+- Messages rendered in a scrollable chat window.
+- Each message shows:
+    • User avatar / AI avatar (minimal icon).
+    • Sender label ("You" / "Assistant").
+    • Timestamp (optional, togglable).
+    • Message content with full Markdown rendering.
+- AI responses streamed token-by-token (streaming API calls) so the user sees
+  output appear in real time.
+- "Stop generating" button appears during streaming.
+- Auto-scroll to the latest message.
+
+### 3.3 Markdown & Code Rendering
+- Full Markdown support: headings, bold, italic, lists, tables, blockquotes.
+- Code blocks with:
+    • Syntax highlighting (using highlight.js or Prism.js).
+    • Language label (e.g., "python", "javascript").
+    • One-click "Copy" button on every code block.
+- Math rendering via KaTeX (LaTeX expressions between $...$ or $$...$$).
+- Inline code styled distinctly from prose.
+
+### 3.4 Conversation Management (Sidebar)
+- Left sidebar (collapsible) lists all past conversations.
+- Each conversation entry shows:
+    • Auto-generated title (first user message, truncated to ~40 chars).
+    • Date of last message.
+- Actions per conversation:
+    • Rename
+    • Delete
+    • Pin to top
+- "New Chat" button at the top of the sidebar.
+- Conversations persisted in localStorage (no backend required).
+- Export conversation as:
+    • Plain text (.txt)
+    • Markdown (.md)
+    • JSON
+
+### 3.5 System Prompt / Persona Configuration
+- "System Prompt" field in Settings allows the user to define the AI's persona,
+  tone, language, and behavior.
+- Default system prompt (see Section 6 — Master AI Prompt).
+- The system prompt is prepended to every conversation invisibly.
+- Presets dropdown: "General Assistant", "Coding Expert", "Writing Coach",
+  "Math Tutor", "Customer Support Agent" (user can add custom presets).
+
+### 3.6 Fallback & Redirect Logic (KEY FEATURE)
+When the AI cannot answer, instead of hallucinating or saying only "I don't
+know", the app:
+
+  STEP 1 — AI signals uncertainty using a structured JSON response flag:
+           { "can_answer": false, "topic": "<topic>", "query": "<user query>" }
+
+  STEP 2 — Frontend detects the flag and shows a "Could not answer" card.
+
+  STEP 3 — The card displays 3–5 curated redirect links:
+
+    Tier 1 — Direct knowledge sources:
+      • Wikipedia                → https://en.wikipedia.org/w/index.php?search=<query>
+      • Khan Academy             → https://www.khanacademy.org/search?page_search_query=<query>
+      • Stack Overflow           → https://stackoverflow.com/search?q=<query>
+      • MDN Web Docs             → https://developer.mozilla.org/en-US/search?q=<query>
+      • arXiv (research papers)  → https://arxiv.org/search/?query=<query>
+
+    Tier 2 — General search:
+      • Google Search            → https://www.google.com/search?q=<query>
+      • DuckDuckGo               → https://duckduckgo.com/?q=<query>
+      • Bing                     → https://www.bing.com/search?q=<query>
+
+    Topic-based routing:
+      • Coding questions         → Stack Overflow + GitHub Search + MDN
+      • Medical questions        → WebMD + Mayo Clinic + NIH
+      • Legal questions          → FindLaw + LexisNexis
+      • News/current events      → Google News + Reuters
+      • Math/science             → Wolfram Alpha + Khan Academy
+      • Academic research        → Google Scholar + arXiv + JSTOR
+
+  STEP 4 — Each redirect link opens in a new tab.
+  STEP 5 — Conversation continues normally after the redirect card.
+
+### 3.7 Smart Suggestions
+- After each AI response, 3 follow-up question chips are shown (AI-generated).
+- Clicking a chip auto-fills the input and sends the message.
+- Can be toggled off in Settings.
+
+### 3.8 Voice Input (Optional / Phase 2)
+- Microphone button next to the text input.
+- Uses Web Speech API (browser-native, no extra API cost).
+- Transcribed text populates the input box.
+- User reviews and sends manually.
+
+### 3.9 File / Image Upload (Optional / Phase 2)
+- Drag-and-drop or click-to-upload files into the chat.
+- Supported for API providers that support vision (e.g., GPT-4o, Claude 3.x).
+- Inline image preview before sending.
+- PDF text extraction (via pdf.js) for text-only models.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 4. UI / UX DESIGN SPECIFICATION
+
+### 4.1 Design Philosophy
+- Minimal. Dark. Fast.
+- No decorative clutter. Every element must serve a purpose.
+- Inspired by ChatGPT's layout but cleaner and more open.
+
+### 4.2 Color Palette (Dark Mode — Default)
+
+  Background (main chat area):   #0d0d0d   (near black)
+  Background (sidebar):          #171717   (dark grey)
+  Background (input area):       #1e1e1e
+  Surface / Card background:     #262626
+  Border / Divider:              #2e2e2e
+  Primary accent:                #10a37f   (ChatGPT-style teal/green)
+  Secondary accent:              #5436da   (purple, for links / highlights)
+  Text (primary):                #ececec
+  Text (secondary / muted):      #8e8ea0
+  Text (code):                   #e06c75
+  User message bubble:           #1a1a2e   (slightly blue-dark)
+  AI message bubble:             transparent (uses main background)
+  Error color:                   #ef4444
+  Warning color:                 #f59e0b
+  Success color:                 #22c55e
+
+### 4.3 Typography
+  Font family:     "Inter", "Söhne", sans-serif (fallback: system-ui)
+  Chat font size:  15–16px
+  Code font:       "JetBrains Mono", "Fira Code", monospace
+  Line height:     1.65 (for readability)
+
+### 4.4 Layout Structure
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  [≡] LOGO / APP NAME              [Settings ⚙] [New Chat ✚]   │  ← Top bar
+  ├──────────────┬──────────────────────────────────────────────────┤
+  │              │                                                  │
+  │   SIDEBAR    │              CHAT AREA                          │
+  │              │                                                  │
+  │ [+ New Chat] │   ┌──────────────────────────────────────────┐  │
+  │              │   │  AI Avatar  Message text here...          │  │
+  │ Past chats:  │   │            with markdown rendering         │  │
+  │  • Chat 1    │   └──────────────────────────────────────────┘  │
+  │  • Chat 2    │                                                  │
+  │  • Chat 3    │   ┌──────────────────────────────────────────┐  │
+  │  ...         │   │  You      Your message text here...       │  │
+  │              │   └──────────────────────────────────────────┘  │
+  │              │                                                  │
+  │              │   [Suggested follow-up chips]                   │
+  │              │                                                  │
+  ├──────────────┴──────────────────────────────────────────────────┤
+  │   [ 🎙 ]  [ Type your message here...              ] [ ➤ Send ] │  ← Input bar
+  │             Model: gpt-4o ▾      Tokens used: 1,240            │
+  └─────────────────────────────────────────────────────────────────┘
+
+### 4.5 Responsive Behavior
+- Desktop (>1024px): Sidebar always visible, chat takes remaining width.
+- Tablet (768–1024px): Sidebar hidden by default, toggle with hamburger icon.
+- Mobile (<768px): Full-screen chat, sidebar is a slide-in drawer.
+- Input bar always pinned to bottom of viewport.
+
+### 4.6 Animations
+- Messages fade in smoothly (opacity 0→1, translateY 8px→0, 200ms ease).
+- Streaming text appears character-by-character (no janky jumps).
+- Sidebar slides in/out (300ms ease-in-out).
+- Loading dots (3-dot bounce) shown while waiting for first token.
+- All transitions respect `prefers-reduced-motion` media query.
+
+### 4.7 Accessibility
+- All interactive elements keyboard-navigable.
+- ARIA labels on icon-only buttons.
+- Focus ring visible on all focusable elements.
+- Contrast ratios ≥ 4.5:1 for all text on backgrounds.
+- Screen-reader-friendly message list with role="log" and aria-live="polite".
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 5. TECHNICAL ARCHITECTURE
+
+### 5.1 Stack
+  Frontend:    React 18 + TypeScript
+  Styling:     Tailwind CSS (dark mode configured)
+  Build tool:  Vite
+  State:       Zustand (lightweight global store)
+  Storage:     localStorage (conversations, settings, API key)
+  Deployment:  Static hosting (Vercel, Netlify, GitHub Pages, or self-hosted)
+
+### 5.2 API Integration Layer
+
+  File: /src/lib/apiClient.ts
+
+  - Abstracts all AI provider calls behind a single `sendMessage()` function.
+  - Accepts:
+      • provider: "openai" | "anthropic" | "gemini" | "custom"
+      • model: string
+      • apiKey: string
+      • messages: Message[]
+      • systemPrompt: string
+      • stream: boolean
+  - Returns: AsyncGenerator<string> (token stream) or Promise<string>.
+  - Handles:
+      • 401 Unauthorized → show "Invalid API Key" toast.
+      • 429 Rate Limit   → show "Rate limit hit, slow down" toast with retry countdown.
+      • 500 Server Error → show "AI provider error" toast.
+      • Network timeout  → show "Connection timeout" toast.
+
+### 5.3 Fallback Detection Logic
+
+  File: /src/lib/fallbackDetector.ts
+
+  - After receiving the AI response, run through:
+      1. Check if AI explicitly says it cannot answer (keyword detection).
+      2. Check confidence score if the model provides one.
+      3. Check if the structured JSON flag { "can_answer": false } is present.
+  - If fallback triggered:
+      • Parse the topic from the AI's structured response.
+      • Map the topic to a redirect category (coding, medical, legal, etc.).
+      • Return an array of 3–5 redirect objects: { label, url, icon }.
+  - The system prompt (Section 6) instructs the AI to always return the
+    structured JSON flag when it cannot answer.
+
+### 5.4 Data Models
+
+  Message:
+    id: string (uuid)
+    role: "user" | "assistant" | "system"
+    content: string
+    timestamp: number
+    isStreaming?: boolean
+    fallback?: FallbackData
+
+  FallbackData:
+    triggered: boolean
+    topic: string
+    redirects: Redirect[]
+
+  Redirect:
+    label: string
+    url: string
+    icon: string (emoji or icon name)
+    category: string
+
+  Conversation:
+    id: string (uuid)
+    title: string
+    messages: Message[]
+    createdAt: number
+    updatedAt: number
+    pinned: boolean
+    model: string
+    systemPrompt: string
+
+  Settings:
+    apiKey: string (encrypted in localStorage)
+    provider: ProviderType
+    model: string
+    systemPrompt: string
+    theme: "dark" | "light" | "system"
+    streamingEnabled: boolean
+    suggestionsEnabled: boolean
+    fontSize: "sm" | "md" | "lg"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 6. MASTER AI SYSTEM PROMPT
+## (Copy this exactly into the System Prompt field or hardcode as default)
+
+────────────────────────────────────────────────────────────────────────────────
+
+You are a highly capable, honest, and helpful AI assistant. You assist users
+with a wide range of tasks including:
+  - Answering general knowledge questions
+  - Writing, editing, and proofreading text
+  - Explaining complex topics in simple terms
+  - Solving math and science problems (show all steps)
+  - Writing, debugging, and explaining code in any programming language
+  - Brainstorming ideas and creative writing
+  - Summarizing long documents or articles
+  - Translating text between languages
+  - Providing factual information on history, science, culture, etc.
+
+────────────────────────────────────────────────────────────────────────────────
+BEHAVIOR RULES:
+
+1. ANSWER FIRST: Always attempt to answer the question directly and completely
+   before anything else.
+
+2. BE CONCISE BUT THOROUGH: Give complete answers but avoid unnecessary padding.
+   Use bullet points, headings, and code blocks when they aid clarity.
+
+3. MARKDOWN: Always format your responses using Markdown. Use headers (##, ###),
+   bold (**text**), italics (*text*), lists (- item), and code blocks
+   (```language ... ```) wherever appropriate.
+
+4. CODE: When writing code, always:
+   - Specify the programming language in the code block.
+   - Include comments explaining key lines.
+   - Provide a brief explanation before and after the code block.
+
+5. MATH: Format all mathematical expressions using LaTeX:
+   - Inline:  $expression$
+   - Block:   $$expression$$
+
+6. HONESTY: Never make up facts. If you are uncertain, say so clearly.
+   Do not hallucinate URLs, citations, names, or statistics.
+
+7. FALLBACK PROTOCOL (VERY IMPORTANT):
+   If you cannot confidently answer a question — because:
+     a) It is about very recent events you have no data on,
+     b) It requires real-time information (stock prices, live scores, weather),
+     c) It is too specialized or niche for your training data,
+     d) It involves professional advice requiring a licensed expert
+        (medical diagnosis, legal counsel, financial advice for a specific
+        person's situation),
+   — then you MUST:
+
+   FIRST, respond with this exact JSON block (and ONLY this, on its own line):
+   FALLBACK:{"can_answer":false,"topic":"<1-3 word topic>","query":"<user's original question>","reason":"<one sentence why you cannot answer>"}
+
+   THEN, after the JSON line, write a SHORT human-friendly explanation like:
+   "I'm not able to give a reliable answer to this. Here are some resources
+   where you can find accurate information:"
+
+   DO NOT attempt to answer if you are genuinely unsure. A redirect is more
+   helpful than a wrong answer.
+
+8. SENSITIVE TOPICS:
+   - Medical: Provide general health information but always recommend consulting
+     a qualified doctor for personal health decisions.
+   - Legal: Explain legal concepts but recommend consulting a lawyer for
+     personal legal situations.
+   - Financial: Explain financial concepts but recommend a financial advisor for
+     personal investment decisions.
+   - Mental health: Be empathetic and supportive. Always recommend professional
+     help when someone is in distress.
+
+9. SAFETY: Do not provide instructions for:
+   - Creating weapons or dangerous substances.
+   - Illegal activities.
+   - Hacking systems without explicit authorization.
+   - Generating harmful, hateful, or explicit content.
+
+10. TONE: Be friendly, professional, and encouraging. Match the user's tone
+    (casual = casual, technical = technical, formal = formal).
+
+11. LANGUAGE: Respond in the same language the user writes in, unless they ask
+    you to use a different language.
+
+12. MEMORY: You do not have memory between conversations. Each conversation
+    starts fresh. Within a conversation, you do remember everything said earlier.
+
+13. IDENTITY: You are an AI assistant. If asked, acknowledge that you are an AI.
+    Do not pretend to be human.
+
+────────────────────────────────────────────────────────────────────────────────
+
+## 7. SETTINGS PANEL SPECIFICATION
+
+Accessible via gear icon (⚙) in the top-right corner.
+
+Sections:
+  [API Configuration]
+    • Provider dropdown:    OpenAI | Anthropic | Google Gemini | Custom
+    • API Key input:        password field with show/hide toggle + "Test Key" button
+    • Base URL (custom):    text input (only shown if provider = Custom)
+    • Model dropdown:       dynamically fetched from provider OR manual text input
+
+  [Model Parameters]
+    • Temperature:          slider 0.0 → 2.0  (default: 0.7)
+    • Max tokens:           number input       (default: 2048)
+    • Top-p:               slider 0.0 → 1.0   (default: 1.0)
+
+  [Persona]
+    • System Prompt:        large textarea (pre-filled with Section 6 prompt)
+    • Preset selector:      "General Assistant" | "Coder" | "Writer" | "Tutor" | Custom
+
+  [Interface]
+    • Theme:                Dark | Light | System
+    • Font size:            Small | Medium | Large
+    • Show timestamps:      toggle
+    • Show suggestions:     toggle
+    • Streaming:            toggle (on/off)
+
+  [Data]
+    • Export all chats:     button → downloads JSON file
+    • Clear all chats:      button → confirmation modal
+    • Clear API key:        button → confirmation modal
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 8. REDIRECT CARD UI SPECIFICATION
+
+Triggered when FALLBACK JSON is detected in AI response.
+
+Visual design:
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  ⚠  I couldn't find a reliable answer for this.                │
+  │     Here are some resources to help you:                       │
+  │                                                                 │
+  │  🌐  Google Search          → [Open ↗]                         │
+  │  📖  Wikipedia              → [Open ↗]                         │
+  │  💻  Stack Overflow         → [Open ↗]  (if coding topic)      │
+  │  🎓  Khan Academy           → [Open ↗]  (if learning topic)    │
+  │  🔬  arXiv                  → [Open ↗]  (if research topic)    │
+  │                                                                 │
+  │  [ Search yourself: ________________________________ [Go] ]    │
+  └─────────────────────────────────────────────────────────────────┘
+
+- Card background: #1a1a1a with amber left border (#f59e0b).
+- Each link opens in a new browser tab.
+- Query is pre-filled in the search box, editable by user.
+- "Go" button opens Google with the edited query.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 9. SUCCESS METRICS
+
+| Metric                          | Target                             |
+|---------------------------------|------------------------------------|
+| Time to first token             | < 1.5 seconds                      |
+| Chat load time (cold start)     | < 2 seconds                        |
+| Fallback redirect click rate    | > 40% (user finds redirect useful) |
+| API key setup completion rate   | > 85%                              |
+| Mobile usability score          | ≥ 90 (Lighthouse)                  |
+| Accessibility score             | ≥ 90 (Lighthouse)                  |
+| Conversation export success     | 100%                               |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 10. OUT OF SCOPE (V1)
+
+- User authentication / accounts (no login required in v1).
+- Cloud sync of conversations.
+- Team / multi-user collaboration.
+- Plugin system.
+- Mobile native app (web-only in v1).
+- Custom fine-tuned models.
+- Billing management (user provides their own key).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 11. DEVELOPMENT PHASES
+
+Phase 1 — Core MVP (Weeks 1–3):
+  ✓ Project setup (React + Vite + Tailwind + Zustand)
+  ✓ API key configuration screen
+  ✓ Basic chat UI (send/receive messages)
+  ✓ Streaming responses
+  ✓ Markdown + code block rendering
+  ✓ Conversation history (localStorage)
+  ✓ Sidebar with past conversations
+  ✓ Fallback detection + redirect card
+  ✓ Dark theme (default)
+
+Phase 2 — Polish (Weeks 4–5):
+  ✓ Suggested follow-up chips
+  ✓ System prompt / persona settings
+  ✓ Multiple AI providers support
+  ✓ Export conversations
+  ✓ Responsive / mobile layout
+  ✓ Accessibility improvements
+  ✓ Animations & micro-interactions
+
+Phase 3 — Advanced Features (Weeks 6–8):
+  ✓ Voice input (Web Speech API)
+  ✓ Image / file upload (for vision models)
+  ✓ KaTeX math rendering
+  ✓ Conversation search
+  ✓ Pin and organize chats
+  ✓ Custom redirect presets
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 12. FILE STRUCTURE
+
+  /
+  ├── index.html
+  ├── vite.config.ts
+  ├── tailwind.config.ts
+  ├── tsconfig.json
+  ├── package.json
+  └── src/
+      ├── main.tsx
+      ├── App.tsx
+      ├── components/
+      │   ├── Sidebar.tsx          ← Conversation list
+      │   ├── ChatWindow.tsx       ← Main message display area
+      │   ├── MessageBubble.tsx    ← Individual message renderer
+      │   ├── InputBar.tsx         ← Text input + send button
+      │   ├── FallbackCard.tsx     ← Redirect card component
+      │   ├── SettingsModal.tsx    ← Settings panel
+      │   ├── SuggestionChips.tsx  ← Follow-up suggestions
+      │   └── CodeBlock.tsx        ← Code block with copy button
+      ├── lib/
+      │   ├── apiClient.ts         ← AI provider abstraction
+      │   ├── fallbackDetector.ts  ← Fallback detection logic
+      │   ├── redirectMap.ts       ← Topic → redirect URL mapping
+      │   ├── storage.ts           ← localStorage helpers
+      │   └── utils.ts             ← General utilities
+      ├── store/
+      │   ├── chatStore.ts         ← Zustand: conversations state
+      │   └── settingsStore.ts     ← Zustand: settings state
+      ├── types/
+      │   └── index.ts             ← TypeScript type definitions
+      └── styles/
+          └── globals.css          ← Global CSS variables, resets
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF DOCUMENT
+Document owner: [Your Name]
+Last updated: 2026-04-09
